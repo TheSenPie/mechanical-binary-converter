@@ -27,16 +27,16 @@ public class Spring {
     }
 
     public double[] move(double t0, double t1, double dt, double x0, double v0, double m) {
-        final int amount = (int) ((t1 - t0) / dt) + 1;
+        final int amount = (int) ((t1 - t0) / dt);
         final double[] coords = new double[amount];
 
         // constant
         final double omega = Math.sqrt(k / m);
-        final double A = v0 / omega;
-        final double B = x0;
+        final double A = x0;
+        final double B = v0 / omega;
         double t = t0;
-        for(int i = 0; t <= t1; i++) {
-            final double coord = A * Math.sin(omega * t) + B * Math.cos(omega * t);
+        for (int i = 0; i < amount; i++) {
+            final double coord = A * Math.cos(omega * t) + B * Math.sin(omega * t);
             coords[i] = coord;
             t += dt;
         }
@@ -46,16 +46,26 @@ public class Spring {
     public Spring inSeries (Spring spring) {
         final double k1 = k;
         final double k2 = spring.k;
-        final double newK = (k1 * k2) / (k1 + k2);
-        return new Spring(newK);
-    }
-
-    public static Spring inSeries (Spring[] springs, int size) {
-        double inverseKSum = 0;
-        for (int i = 0; i < size; i++) {
-            inverseKSum += 1 / springs[i].getK();
+        if (k1 == 0 && k2 == 0) {
+            return new Spring(0);
         }
-        return new Spring(1 / inverseKSum);
+
+        double oneOverK1;
+        if (k1 == 0) {
+            oneOverK1 = 0;
+        } else {
+            oneOverK1 = 1 / k1;
+        }
+
+        double oneOverK2;
+        if (k2 == 0) {
+            oneOverK2 = 0;
+        } else {
+            oneOverK2 = 1 / k2;
+        }
+
+        final double newK = 1 / ( oneOverK1 + oneOverK2);
+        return new Spring(newK);
     }
 
     public Spring inParallel (Spring spring) {
@@ -63,14 +73,6 @@ public class Spring {
         final double k2 = spring.k;
         final double newK = k1 + k2;
         return new Spring(newK);
-    }
-
-    public static Spring inParallel (Spring[] springs, int size) {
-        double kSum = 0;
-        for (int i = 0; i < size; i++) {
-            kSum += springs[i].getK();
-        }
-        return new Spring(kSum);
     }
 
     public double getK () {
